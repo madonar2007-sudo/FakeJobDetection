@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+</head>
+
+<body>
+
+    <h1>📊 Admin Dashboard</h1>
+
+    <hr>
+
+    <h2>Job Advertisement Summary</h2>
+
+    <p>📊 Total Job Advertisements: {{ total_jobs }}</p>
+
+    <p>✅ Genuine Jobs: {{ genuine_jobs }}</p>
+
+    <p>⚠️ Suspicious/Fake Jobs: {{ fake_jobs }}</p>
+
+    <hr>
+
+    <h2>📋 Job Advertisement Details</h2>
+
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Job Title</th>
+            <th>Company</th>
+            <th>Result</th>
+            <th>Action</th>
+        </tr>
+
+        {% for job in jobs %}
+        <tr>
+            <td>{{ job.title }}</td>
+            <td>{{ job.company }}</td>
+            <td>{{ job.result }}</td>
+            <td>
+                <button>Delete</button>
+            </td>
+        </tr>
+        {% endfor %}
+
+    </table>
+
+</body>
+</html>
