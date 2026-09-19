@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verihire — Job Ad Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0E1520;
+    --panel:#141E2B;
+    --panel-2:#182333;
+    --hairline:#26333F;
+    --text:#E7EDF3;
+    --muted:#8CA0B3;
+    --faint:#5C7080;
+    --scan:#5B8DEF;
+    --safe:#3FB88C;
+    --warn:#E9B44C;
+    --danger:#E15B4D;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(91,141,239,0.10), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(63,184,140,0.06), transparent 55%),
+      var(--ink);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .display{font-family:'Space Grotesk',sans-serif;}
+  a{color:inherit;}
+
+  .card{
+    background:var(--panel);border:1px solid var(--hairline);border-radius:var(--radius);
+    padding:22px;margin-bottom:20px;
+  }
+  textarea, input[type=text], input[type=email], input[type=password]{
+    width:100%;background:var(--panel-2);border:1px solid var(--hairline);border-radius:10px;
+    color:var(--text);font-family:'Inter',sans-serif;font-size:14px;padding:14px;
+    resize:vertical;outline:none;transition:border-color .15s;
+  }
+  textarea:focus, input:focus{border-color:var(--scan);}
+  textarea::placeholder, input::placeholder{color:var(--faint);}
+  .field label{display:block;font-size:11px;color:var(--faint);margin-bottom:6px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.03em;}
+
+  .btn-primary{
+    width:100%;padding:15px;border:none;border-radius:10px;cursor:pointer;
+    background:var(--scan);color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;
+    display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .1s, background .15s;
+  }
+  .btn-primary:hover{background:#4A7BDB;}
+  .btn-primary:active{transform:scale(0.99);}
+  .btn-primary:disabled{opacity:0.6;cursor:default;}
+  .btn-ghost{
+    padding:12px;border-radius:9px;border:1px solid var(--hairline);background:transparent;
+    color:var(--muted);font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;
+  }
+  .btn-ghost:hover{border-color:var(--faint);color:var(--text);}
+  .btn-ghost.danger:hover{border-color:var(--danger);color:var(--danger);}
+  .error-text{color:var(--danger);font-size:12.5px;margin-top:10px;display:none;font-family:'IBM Plex Mono',monospace;}
+  .error-text.show{display:block;}
+
+  #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .login-box{width:100%;max-width:400px;}
+  .login-logo{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:28px;}
+  .logo-mark{
+    width:30px;height:30px;border-radius:7px;
+    background:linear-gradient(135deg,var(--scan),var(--safe));
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;font-weight:700;color:#0E1520;flex:none;
+  }
+  .logo-text{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;letter-spacing:0.02em;}
+  .logo-text span{color:var(--muted);font-weight:500;}
+
+  .role-tabs{display:flex;gap:4px;background:var(--panel-2);padding:4px;border-radius:10px;margin-bottom:20px;}
+  .role-tab{
+    flex:1;padding:9px;border-radius:7px;font-size:13px;font-weight:500;color:var(--muted);
+    cursor:pointer;border:none;background:transparent;font-family:'Inter',sans-serif;text-align:center;
+  }
+  .role-tab.active{background:var(--ink);color:var(--text);}
+  .login-hint{font-size:12px;color:var(--faint);line-height:1.6;margin-top:14px;padding-top:14px;border-top:1px solid var(--hairline);}
+  .login-hint .fill{color:var(--scan);cursor:pointer;text-decoration:underline;}
+  .reset-note{text-align:center;font-size:11.5px;color:var(--faint);margin-top:22px;font-family:'IBM Plex Mono',monospace;}
+
+  #appShell{display:none;}
+  header{
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+    padding:16px 28px;border-bottom:1px solid var(--hairline);
+    position:sticky;top:0;background:rgba(14,21,32,0.9);backdrop-filter:blur(8px);z-index:10;
+  }
+  .logo{display:flex;align-items:center;gap:10px;}
+  .hdr-nav{display:flex;align-items:center;gap:6px;background:var(--panel-2);padding:4px;border-radius:10px;}
+  .hdr-tab{
+    padding:8px 14px;border-radius:7px;font-size:13px;font-weight:500;color:var(--muted);
+    cursor:pointer;border:none;background:transparent;font-family:'Inter',sans-serif;
+  }
+  .hdr-tab.active{background:var(--ink);color:var(--text);}
+  .hdr-right{display:flex;align-items:center;gap:14px;}
+  .user-chip{font-size:12.5px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+  .role-pill{font-size:10px;padding:3px 8px;border-radius:99px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.04em;text-transform:uppercase;}
+  .role-pill.admin{background:rgba(233,180,76,0.15);color:var(--warn);}
+  .role-pill.user{background:rgba(91,141,239,0.15);color:var(--scan);}
+  .logout-btn{background:none;border:none;color:var(--faint);cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;}
+  .logout-btn:hover{color:var(--danger);}
+
+  main{max-width:640px;margin:0 auto;padding:48px 24px 100px;}
+  main.wide{max-width:920px;}
+
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.12em;
+    color:var(--scan);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px;
+  }
+  .eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--scan);box-shadow:0 0 0 3px rgba(91,141,239,0.2);}
+  h1{font-family:'Space Grotesk',sans-serif;font-size:34px;line-height:1.15;font-weight:700;margin:0 0 12px;letter-spacing:-0.01em;}
+  h2{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin:0 0 4px;}
+  .lede{color:var(--muted);font-size:15px;line-height:1.6;margin:0 0 32px;max-width:52ch;}
+
+  .tabs{display:flex;gap:4px;background:var(--panel-2);padding:4px;border-radius:10px;margin-bottom:16px;width:fit-content;}
+  .tab{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:'Inter',sans-serif;}
+  .tab.active{background:var(--ink);color:var(--text);}
+  textarea{min-height:140px;line-height:1.55;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+  .examples{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  .chip{font-size:12px;color:var(--muted);background:var(--panel-2);border:1px solid var(--hairline);padding:7px 12px;border-radius:99px;cursor:pointer;font-family:'Inter',sans-serif;}
+  .chip:hover{border-color:var(--scan);color:var(--text);}
+  .scan-btn{margin-top:18px;}
+
+  .result{display:none;}
+  .result.show{display:block;animation:fadein .35s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .result-top{display:flex;align-items:center;gap:22px;}
+  .gauge-wrap{position:relative;width:118px;height:118px;flex:none;}
+  .gauge-score{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .gauge-score .num{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600;line-height:1;}
+  .gauge-score .lbl{font-size:9px;color:var(--faint);letter-spacing:0.08em;margin-top:3px;}
+  .verdict-block{flex:1;}
+  .verdict-badge{display:inline-block;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px;padding:5px 0;margin-bottom:6px;}
+  .verdict-sub{font-size:13px;color:var(--muted);line-height:1.5;}
+  .divider{height:1px;background:var(--hairline);margin:20px 0;}
+  .reasons-title{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;color:var(--faint);text-transform:uppercase;margin-bottom:12px;}
+  .reason{display:flex;gap:10px;align-items:flex-start;padding:9px 0;font-size:13.5px;color:var(--text);border-top:1px solid var(--hairline);}
+  .reason:first-child{border-top:none;}
+  .reason-mark{flex:none;width:16px;height:16px;border-radius:4px;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+  .actions{display:flex;gap:10px;margin-top:20px;}
+  .actions .btn-ghost{flex:1;}
+  .report-form{display:none;margin-top:14px;}
+  .report-form.show{display:block;}
+  .report-form textarea{min-height:70px;margin-bottom:10px;}
+  .report-confirm{font-size:12.5px;color:var(--safe);margin-top:10px;display:none;font-family:'IBM Plex Mono',monospace;}
+  .report-confirm.show{display:block;}
+  .scanning-line{position:absolute;left:6px;right:6px;height:2px;background:var(--scan);opacity:0;border-radius:2px;box-shadow:0 0 8px 1px var(--scan);}
+  .scanning-line.active{animation:sweep 1.1s ease-in-out;}
+  @keyframes sweep{0%{top:20%;opacity:0;} 10%{opacity:1;} 90%{opacity:1;} 100%{top:80%;opacity:0;}}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+  .stat-card{background:var(--panel);border:1px solid var(--hairline);border-radius:12px;padding:16px;}
+  .stat-num{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;}
+  .stat-lbl{font-size:11px;color:var(--faint);margin-top:4px;letter-spacing:0.03em;}
+  .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .section-head h2{font-size:16px;}
+  .empty-state{color:var(--faint);font-size:13px;padding:24px 0;text-align:center;font-family:'IBM Plex Mono',monospace;}
+
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--faint);letter-spacing:0.05em;text-transform:uppercase;padding:0 10px 10px;font-weight:500;}
+  td{padding:12px 10px;font-size:13px;border-top:1px solid var(--hairline);vertical-align:top;}
+  tr:first-child td{border-top:none;}
+  .snippet{color:var(--muted);max-width:220px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .badge{font-size:11px;padding:3px 9px;border-radius:99px;font-family:'IBM Plex Mono',monospace;display:inline-block;}
+  .row-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .row-actions button{font-size:11px;padding:6px 10px;border-radius:7px;border:1px solid var(--hairline);background:var(--panel-2);color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;}
+  .row-actions button:hover{color:var(--text);border-color:var(--faint);}
+  .row-actions button.accept:hover{color:var(--danger);border-color:var(--danger);}
+  .row-actions button.reject:hover{color:var(--safe);border-color:var(--safe);}
+
+  .pattern-bar-row{display:flex;align-items:center;gap:10px;padding:7px 0;}
+  .pattern-label{font-size:12.5px;color:var(--muted);width:230px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .pattern-track{flex:1;height:6px;background:var(--panel-2);border-radius:99px;overflow:hidden;}
+  .pattern-fill{height:100%;background:var(--scan);border-radius:99px;}
+  .pattern-count{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--faint);width:22px;text-align:right;flex:none;}
+
+  footer{max-width:640px;margin:0 auto;padding:0 24px 60px;color:var(--faint);font-size:12px;line-height:1.7;}
+  main.wide + footer{max-width:920px;}
+
+  @media (max-width:640px){
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .field-row{grid-template-columns:1fr;}
+    .result-top{flex-direction:column;align-items:flex-start;}
+    h1{font-size:27px;}
+    .snippet{max-width:120px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-mark">V</div>
+      <div class="logo-text">VERIHIRE <span>/ scanner</span></div>
+    </div>
+
+    <div class="card">
+      <div class="role-tabs">
+        <button class="role-tab active" data-role="user">Job Seeker</button>
+        <button class="role-tab" data-role="admin">Admin</button>
+      </div>
+
+      <div class="field" style="margin-bottom:12px;">
+        <label>EMAIL</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label>PASSWORD</label>
+        <input type="password" id="loginPassword" placeholder="••••••••">
+      </div>
+
+      <button class="btn-primary" id="loginBtn" style="margin-top:18px;">Sign in</button>
+      <div class="error-text" id="loginError">Invalid admin credentials.</div>
+
+    </div>
+
+    <div class="reset-note">Nothing persists — reloading this page always starts a fresh session.</div>
+  </div>
+</div>
+
+<div id="appShell">
+  <header>
+    <div class="logo">
+      <div class="logo-mark">V</div>
+      <div class="logo-text">VERIHIRE <span>/ scanner</span></div>
+    </div>
+    <div class="hdr-nav" id="hdrNav">
+      <button class="hdr-tab active" data-view="scanner">Scanner</button>
+      <button class="hdr-tab" data-view="dashboard" id="dashboardTabBtn" style="display:none;">Admin Dashboard</button>
+    </div>
+    <div class="hdr-right">
+      <span class="role-pill user" id="rolePill">USER</span>
+      <span class="user-chip" id="userChip">—</span>
+      <button class="logout-btn" id="logoutBtn">Log out</button>
+    </div>
+  </header>
+
+  <main id="view-scanner">
+    <div class="eyebrow">Client-side scam pattern scan</div>
+    <h1>Paste a job ad. We'll tell you if it looks like a scam — and exactly why.</h1>
+    <p class="lede">Checks for fee requests, urgency pressure, free-email contacts posing as companies, unrealistic salary claims, and missing company details. Nothing you paste here leaves your browser.</p>
+
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" data-tab="text">Paste text</button>
+        <button class="tab" data-tab="url">Job URL</button>
+      </div>
+
+      <div id="panel-text">
+        <textarea id="adText" placeholder="Paste the job advertisement text here — e.g. from an email, WhatsApp message, or job portal listing..."></textarea>
+        <div class="field-row">
+          <div class="field">
+            <label>COMPANY NAME (optional)</label>
+            <input type="text" id="companyName" placeholder="e.g. Acme Corp">
+          </div>
+          <div class="field">
+            <label>CONTACT EMAIL (optional)</label>
+            <input type="text" id="contactEmail" placeholder="e.g. hr@acme.com">
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-url" style="display:none;">
+        <input type="text" id="adUrl" placeholder="https://example.com/job-posting-123">
+        <p style="font-size:12px;color:var(--faint);margin-top:10px;line-height:1.6;">Tries several fetch methods automatically and scans whichever succeeds. Works for most public job listings and career pages; sites that require login (LinkedIn, Indeed, Glassdoor) can't be fetched from any browser-only tool — paste the text directly for those.</p>
+        <p class="error-text" id="urlError" style="margin-top:8px;"></p>
+      </div>
+
+      <div class="examples">
+        <div class="chip" id="exScam">Try a scam example</div>
+        <div class="chip" id="exGenuine">Try a genuine example</div>
+        <div class="chip" id="exClear">Clear</div>
+      </div>
+
+      <button class="btn-primary scan-btn" id="scanBtn">
+        <span id="scanBtnLabel">Run scan</span>
+      </button>
+    </div>
+
+    <div class="card result" id="resultCard">
+      <div class="result-top">
+        <div class="gauge-wrap">
+          <svg width="118" height="118" viewBox="0 0 118 118">
+            <circle cx="59" cy="59" r="50" fill="none" stroke="#26333F" stroke-width="9"/>
+            <circle id="gaugeArc" cx="59" cy="59" r="50" fill="none" stroke="var(--scan)" stroke-width="9"
+                    stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314"
+                    transform="rotate(-90 59 59)" style="transition:stroke-dashoffset 0.9s cubic-bezier(.2,.8,.2,1), stroke 0.3s;"/>
+          </svg>
+          <div class="scanning-line" id="scanLine"></div>
+          <div class="gauge-score">
+            <div class="num mono" id="scoreNum">—</div>
+            <div class="lbl">RISK SCORE</div>
+          </div>
+        </div>
+        <div class="verdict-block">
+          <div class="verdict-badge" id="verdictBadge">—</div>
+          <div class="verdict-sub" id="verdictSub">Run a scan to see the classification and reasoning here.</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="reasons-title">Reasons detected</div>
+      <div id="reasonsList"></div>
+
+      <div class="actions">
+        <button class="btn-ghost" id="rescanBtn">Scan another</button>
+        <button class="btn-ghost danger" id="reportBtn">Report this ad</button>
+      </div>
+
+      <div class="report-form" id="reportForm">
+        <textarea id="reportComment" placeholder="Add any details for the review team (optional)..."></textarea>
+        <button class="btn-primary" id="submitReportBtn">Submit report</button>
+        <div class="report-confirm" id="reportConfirm">✓ Report queued for admin review.</div>
+      </div>
+    </div>
+
+    <p style="font-size:12px;color:var(--faint);line-height:1.7;margin-top:36px;">
+      This page runs the same scam-pattern rule engine as the full system's backend (<span class="mono">risk_engine.py</span>), entirely in your browser. The full deployed version also blends a trained ML model's probability into the score and adds OCR for screenshots/PDFs and live URL fetching.
+    </p>
+  </main>
+
+  <main id="view-dashboard" class="wide" style="display:none;">
+    <div class="eyebrow">Admin</div>
+    <h1 style="font-size:28px;">Verification &amp; analytics dashboard</h1>
+    <p class="lede">Session-scoped view of every scan and report — resets when the page reloads, same as the rest of this demo.</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-lbl">SCANS THIS SESSION</div></div>
+      <div class="stat-card"><div class="stat-num" id="statFake" style="color:var(--danger);">0</div><div class="stat-lbl">LIKELY FAKE</div></div>
+      <div class="stat-card"><div class="stat-num" id="statVerify" style="color:var(--warn);">0</div><div class="stat-lbl">NEEDS VERIFICATION</div></div>
+      <div class="stat-card"><div class="stat-num" id="statPending">0</div><div class="stat-lbl">REPORTS PENDING</div></div>
+    </div>
+
+    <div class="card">
+      <div class="section-head"><h2>Reported advertisements</h2></div>
+      <div id="reportsTableWrap">
+        <div class="empty-state">No reports yet. Reports filed from the Scanner tab will appear here.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-head"><h2>Top scam patterns detected</h2></div>
+      <div id="patternsWrap">
+        <div class="empty-state">Run a few scans to see pattern trends.</div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Verihire is a demo scam-detection scanner. It flags patterns common in fraudulent job ads but is not a guarantee — always independently verify a company before paying any fee or sharing personal documents.
+  </footer>
+</div>
+
+<script>
+  const appState = { role: null, email: null, scans: [], reports: [] };
+  let reportIdCounter = 1;
+
+  let selectedRole = 'user';
+  document.querySelectorAll('.role-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      selectedRole = tab.dataset.role;
+      document.getElementById('loginError').classList.remove('show');
+    });
+  });
+  document.getElementById('loginBtn').addEventListener('click', ()=>{
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorEl = document.getElementById('loginError');
+    errorEl.classList.remove('show');
+
+    if(!email || !password){
+      errorEl.textContent = 'Enter an email and password to continue.';
+      errorEl.classList.add('show');
+      return;
+    }
+    if(selectedRole === 'admin'){
+      if(email !== 'admin@verihire.com' || password !== 'admin123'){
+        errorEl.textContent = 'Invalid admin credentials.';
+        errorEl.classList.add('show');
+        return;
+      }
+    }
+    appState.role = selectedRole;
+    appState.email = email;
+    enterApp();
+  });
+
+  function enterApp(){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appShell').style.display = 'block';
+    document.getElementById('userChip').textContent = appState.email;
+    document.getElementById('rolePill').textContent = appState.role.toUpperCase();
+    document.getElementById('rolePill').className = 'role-pill ' + appState.role;
+
+    if(appState.role === 'admin'){
+      document.getElementById('dashboardTabBtn').style.display = 'inline-block';
+      switchView('dashboard');
+    } else {
+      document.getElementById('dashboardTabBtn').style.display = 'none';
+      switchView('scanner');
+    }
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', ()=>{
+    appState.role = null;
+    appState.email = null;
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('appShell').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+  });
+
+  document.querySelectorAll('.hdr-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=> switchView(tab.dataset.view));
+  });
+  function switchView(view){
+    document.querySelectorAll('.hdr-tab').forEach(t=>t.classList.toggle('active', t.dataset.view===view));
+    document.getElementById('view-scanner').style.display = view==='scanner' ? 'block' : 'none';
+    document.getElementById('view-dashboard').style.display = view==='dashboard' ? 'block' : 'none';
+    if(view === 'dashboard') renderDashboard();
+  }
+
+  const FREE_EMAIL_DOMAINS = new Set(["gmail.com","yahoo.com","hotmail.com","outlook.com","rediffmail.com"]);
+  const SCAM_PATTERNS = [
+    [/\bregistration fee\b/i, 0.30, "Registration fee requested"],
+    [/\bsecurity deposit\b/i, 0.30, "Security deposit requested"],
+    [/\btraining fee\b/i, 0.25, "Training fee requested"],
+    [/\bpay (?:a |an )?fee\b/i, 0.25, "Upfront payment requested"],
+    [/\bguaranteed job\b/i, 0.15, "'Guaranteed job' claim (unrealistic promise)"],
+    [/\bno experience required\b/i, 0.08, "'No experience required' for a paid role"],
+    [/\bearn money (?:quickly|fast)\b/i, 0.20, "'Earn money quickly' — classic scam phrasing"],
+    [/\blimited vacanc(?:y|ies)\b/i, 0.10, "Artificial urgency: 'limited vacancies'"],
+    [/\bimmediate joining\b/i, 0.08, "High-pressure 'immediate joining' language"],
+    [/\burgent(?:ly)? hiring\b/i, 0.10, "'Urgent hiring' pressure tactic"],
+    [/\bwork from home\b.{0,40}\b(?:earn|income|salary)\b/i, 0.08, "Vague 'work from home + earn' claim"],
+    [/\bwhatsapp (?:only|us)?\b/i, 0.12, "Contact only via WhatsApp (no official channel)"],
+    [/\btelegram\b/i, 0.12, "Contact via Telegram (unusual for legitimate hiring)"],
+  ];
+  const MISSING_DETAIL_PENALTY = 0.10;
+
+  function salaryFlag(text){
+    const matches = [...text.matchAll(/(?:rs\.?|inr|₹|\$)\s?([\d,]{4,})/gi)];
+    for(const m of matches){
+      const val = parseInt(m[1].replace(/,/g,""), 10);
+      if(val > 10000000) return `Salary figure (${m[1]}) is implausibly high for the described role`;
+    }
+    return null;
+  }
+  function evaluateRules(text, companyName, contactEmail){
+    const lower = text.toLowerCase();
+    let total = 0;
+    const reasons = [];
+    for(const [pattern, weight, reason] of SCAM_PATTERNS){
+      if(pattern.test(lower)){ total += weight; reasons.push(reason); }
+    }
+    if(contactEmail){
+      const domain = contactEmail.split("@").pop().toLowerCase();
+      if(FREE_EMAIL_DOMAINS.has(domain)){
+        total += 0.15;
+        reasons.push(`Free-email domain (${domain}) used for a corporate contact`);
+      }
+    }
+    if(!companyName){
+      total += MISSING_DETAIL_PENALTY;
+      reasons.push("Missing verifiable company name");
+    }
+    const sf = salaryFlag(text);
+    if(sf){ total += 0.20; reasons.push(sf); }
+    return { ruleScore: Math.min(total, 1.0), reasons };
+  }
+  function classify(score){
+    if(score <= 30) return "Likely Genuine";
+    if(score <= 60) return "Needs Verification";
+    return "Likely Fake";
+  }
+  function verdictColor(label){
+    if(label === "Likely Genuine") return getComputedStyle(document.documentElement).getPropertyValue('--safe').trim();
+    if(label === "Needs Verification") return getComputedStyle(document.documentElement).getPropertyValue('--warn').trim();
+    return getComputedStyle(document.documentElement).getPropertyValue('--danger').trim();
+  }
+
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      const which = tab.dataset.tab;
+      document.getElementById('panel-text').style.display = which==='text' ? 'block' : 'none';
+      document.getElementById('panel-url').style.display = which==='url' ? 'block' : 'none';
+    });
+  });
+
+  const SCAM_EXAMPLE = "URGENT HIRING! Work from home and earn money quickly. No experience required. Pay a registration fee of Rs.2000 to secure your seat. Contact us on WhatsApp only. Salary: Rs.50,00,000 per month, guaranteed job, limited vacancies!";
+  const GENUINE_EXAMPLE = "Acme Robotics is hiring a Backend Engineer (Bangalore, hybrid). 3+ years experience with Python/Go. Competitive salary based on experience, standard benefits, and a structured 4-round interview process. Apply via our careers page — no fees at any stage.";
+  document.getElementById('exScam').onclick = ()=>{ document.getElementById('adText').value = SCAM_EXAMPLE; document.getElementById('contactEmail').value = "hr2024@gmail.com"; document.getElementById('companyName').value=""; };
+  document.getElementById('exGenuine').onclick = ()=>{ document.getElementById('adText').value = GENUINE_EXAMPLE; document.getElementById('contactEmail').value = "careers@acmerobotics.com"; document.getElementById('companyName').value="Acme Robotics"; };
+  document.getElementById('exClear').onclick = ()=>{ document.getElementById('adText').value=""; document.getElementById('contactEmail').value=""; document.getElementById('companyName').value=""; document.getElementById('resultCard').classList.remove('show'); };
+
+  const scanBtn = document.getElementById('scanBtn');
+  const scanBtnLabel = document.getElementById('scanBtnLabel');
+  const resultCard = document.getElementById('resultCard');
+  const gaugeArc = document.getElementById('gaugeArc');
+  const scoreNum = document.getElementById('scoreNum');
+  const verdictBadge = document.getElementById('verdictBadge');
+  const verdictSub = document.getElementById('verdictSub');
+  const reasonsList = document.getElementById('reasonsList');
+  const scanLine = document.getElementById('scanLine');
+  let lastScan = null;
+  let activeInputTab = 'text';
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{ activeInputTab = tab.dataset.tab; });
+  });
+
+  function unwrapRedirectUrl(url){
+    // Redirect/tracking wrappers (LinkedIn "safety" links, Google redirects,
+    // etc.) put the real destination in a query param instead of being the
+    // destination themselves. Follow one level of that if present.
+    try{
+      const parsed = new URL(url);
+      const candidateParams = ['url', 'u', 'q', 'target', 'redirect'];
+      for(const key of candidateParams){
+        const val = parsed.searchParams.get(key);
+        if(val && /^https?:\/\//i.test(val)){
+          return val;
+        }
+      }
+    } catch(e){ /* fall through to original url */ }
+    return url;
+  }
+
+  function extractVisibleText(html){
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    doc.querySelectorAll('script,style,nav,footer,noscript,svg').forEach(el=>el.remove());
+    return (doc.body ? doc.body.innerText : doc.documentElement.innerText || '').replace(/\s+/g,' ').trim();
+  }
+
+  function finishScan(text, companyName, contactEmail, sourceLabel){
+    const { ruleScore, reasons } = evaluateRules(text, companyName, contactEmail);
+    const score = Math.round(ruleScore * 100);
+    const label = classify(score);
+    const color = verdictColor(label);
+
+    const circumference = 314;
+    gaugeArc.style.stroke = color;
+    gaugeArc.style.strokeDashoffset = circumference - (score/100)*circumference;
+    scoreNum.textContent = score;
+    scoreNum.style.color = color;
+    verdictBadge.textContent = label;
+    verdictBadge.style.color = color;
+    verdictSub.textContent = label === "Likely Genuine"
+      ? "No strong scam indicators found. Still verify the company independently before sharing documents or paying anything."
+      : label === "Needs Verification"
+      ? "Some risk signals present. Verify the company's official domain and never pay any fee before confirming legitimacy."
+      : "Multiple strong scam indicators found. Treat this posting as fraudulent — do not pay any fee or share personal documents.";
+
+    reasonsList.innerHTML = "";
+    const shown = reasons.length ? reasons : ["No specific scam-pattern indicators triggered"];
+    shown.forEach(r=>{
+      const row = document.createElement('div');
+      row.className = 'reason';
+      row.innerHTML = `<div class="reason-mark" style="background:${color}22;color:${color};">!</div><div>${r}</div>`;
+      reasonsList.appendChild(row);
+    });
+
+    lastScan = { text, score, label, reasons: shown, by: appState.email, source: sourceLabel, at: new Date() };
+    appState.scans.push(lastScan);
+
+    resultCard.classList.add('show');
+    document.getElementById('reportForm').classList.remove('show');
+    document.getElementById('reportConfirm').classList.remove('show');
+    resultCard.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+
+  async function runScan(){
+    const urlError = document.getElementById('urlError');
+    urlError.classList.remove('show');
+
+    if(activeInputTab === 'url'){
+      let url = document.getElementById('adUrl').value.trim();
+      if(!/^https?:\/\/.+/i.test(url)){
+        urlError.textContent = 'Enter a full URL starting with http:// or https://';
+        urlError.classList.add('show');
+        return;
+      }
+
+      // Unwrap common redirect/tracking wrappers (LinkedIn safety redirect,
+      // Google redirect links, etc.) that carry the real target in a
+      // query param rather than pointing at the job posting directly.
+      url = unwrapRedirectUrl(url);
+
+      const hostname = (new URL(url)).hostname.replace(/^www\./, '');
+      const PROXY_BLOCKED_DOMAINS = ['linkedin.com', 'indeed.com', 'glassdoor.com'];
+      const isKnownBlocked = PROXY_BLOCKED_DOMAINS.some(d => hostname === d || hostname.endsWith('.' + d));
+
+      scanBtn.disabled = true;
+      scanLine.classList.add('active');
+
+      // Try several fetch strategies in order — no single free CORS proxy
+      // is reliable on its own (they have no uptime guarantee and fail
+      // intermittently even on pages that aren't blocking anything).
+      const attempts = [
+        {
+          name: 'jina',
+          label: 'Fetching page...',
+          fetchIt: async () => {
+            const resp = await fetch('https://r.jina.ai/' + url);
+            if(!resp.ok) throw new Error('status ' + resp.status);
+            const text = (await resp.text()).replace(/\s+/g, ' ').trim();
+            return text;
+          },
+        },
+        {
+          name: 'allorigins',
+          label: 'Fetching page (retry 1)...',
+          fetchIt: async () => {
+            const resp = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+            if(!resp.ok) throw new Error('status ' + resp.status);
+            return extractVisibleText(await resp.text());
+          },
+        },
+        {
+          name: 'corsproxy',
+          label: 'Fetching page (retry 2)...',
+          fetchIt: async () => {
+            const resp = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(url));
+            if(!resp.ok) throw new Error('status ' + resp.status);
+            return extractVisibleText(await resp.text());
+          },
+        },
+      ];
+
+      let extractedText = null;
+      let lastErr = null;
+      for(const attempt of attempts){
+        scanBtnLabel.textContent = attempt.label;
+        try{
+          const text = await attempt.fetchIt();
+          if(text && text.length >= 30){
+            extractedText = text;
+            break;
+          }
+          lastErr = new Error('page returned no readable text');
+        } catch(err){
+          lastErr = err;
+        }
+      }
+
+      if(extractedText){
+        scanBtnLabel.textContent = "Scanning...";
+        await new Promise(r=>setTimeout(r, 400));
+        finishScan(extractedText, null, null, url);
+      } else {
+        if(isKnownBlocked){
+          urlError.textContent = hostname + ' blocks automated/proxy access to job listings (and usually requires login to view the full post), so it can\'t be fetched from here even after multiple attempts. Copy the job description text and use the "Paste text" tab instead — the scan works the same either way.';
+        } else {
+          urlError.textContent = 'Could not fetch that page after trying several methods (' + (lastErr ? lastErr.message : 'unknown error') + '). The site may block automated access or require login — try pasting the ad text directly instead.';
+        }
+        urlError.classList.add('show');
+      }
+      scanBtn.disabled = false;
+      scanBtnLabel.textContent = "Run scan";
+      scanLine.classList.remove('active');
+      return;
+    }
+
+    const text = document.getElementById('adText').value.trim();
+    if(text.length < 10){
+      const ta = document.getElementById('adText');
+      ta.focus(); ta.style.borderColor = 'var(--danger)';
+      setTimeout(()=>{ ta.style.borderColor = ''; }, 900);
+      return;
+    }
+    const companyName = document.getElementById('companyName').value.trim();
+    const contactEmail = document.getElementById('contactEmail').value.trim();
+
+    scanBtn.disabled = true;
+    scanBtnLabel.textContent = "Scanning...";
+    scanLine.classList.add('active');
+
+    setTimeout(()=>{
+      finishScan(text, companyName, contactEmail, 'pasted text');
+      scanBtn.disabled = false;
+      scanBtnLabel.textContent = "Run scan";
+      scanLine.classList.remove('active');
+    }, 850);
+  }
+
+  scanBtn.addEventListener('click', runScan);
+  document.getElementById('rescanBtn').addEventListener('click', ()=>{
+    document.getElementById('adText').focus();
+    resultCard.classList.remove('show');
+  });
+  document.getElementById('reportBtn').addEventListener('click', ()=>{
+    document.getElementById('reportForm').classList.toggle('show');
+  });
+  document.getElementById('submitReportBtn').addEventListener('click', ()=>{
+    if(!lastScan) return;
+    appState.reports.push({
+      id: reportIdCounter++,
+      snippet: lastScan.text.slice(0, 80) + (lastScan.text.length > 80 ? '…' : ''),
+      score: lastScan.score,
+      label: lastScan.label,
+      comment: document.getElementById('reportComment').value.trim(),
+      status: 'pending',
+      by: appState.email,
+      at: new Date(),
+    });
+    document.getElementById('reportConfirm').classList.add('show');
+    document.getElementById('reportComment').value = '';
+  });
+
+  function labelColorVar(label){
+    if(label === "Likely Genuine") return 'var(--safe)';
+    if(label === "Needs Verification") return 'var(--warn)';
+    return 'var(--danger)';
+  }
+  function statusMeta(status){
+    if(status === 'pending') return { text: 'Pending', color: 'var(--warn)' };
+    if(status === 'verified_fake') return { text: 'Confirmed Fake', color: 'var(--danger)' };
+    return { text: 'Confirmed Genuine', color: 'var(--safe)' };
+  }
+
+  function renderDashboard(){
+    const scans = appState.scans;
+    const reports = appState.reports;
+
+    document.getElementById('statTotal').textContent = scans.length;
+    document.getElementById('statFake').textContent = scans.filter(s=>s.label==='Likely Fake').length;
+    document.getElementById('statVerify').textContent = scans.filter(s=>s.label==='Needs Verification').length;
+    document.getElementById('statPending').textContent = reports.filter(r=>r.status==='pending').length;
+
+    const wrap = document.getElementById('reportsTableWrap');
+    if(reports.length === 0){
+      wrap.innerHTML = '<div class="empty-state">No reports yet. Reports filed from the Scanner tab will appear here.</div>';
+    } else {
+      let rows = reports.slice().reverse().map(r=>{
+        const sm = statusMeta(r.status);
+        return `<tr>
+          <td><span class="snippet" title="${r.snippet.replace(/"/g,'&quot;')}">${r.snippet}</span></td>
+          <td><span class="badge mono" style="background:${labelColorVar(r.label)}22;color:${labelColorVar(r.label)};">${r.score}</span></td>
+          <td>${r.label}</td>
+          <td>${r.by || '—'}</td>
+          <td><span class="badge mono" style="background:${sm.color}22;color:${sm.color};">${sm.text}</span></td>
+          <td>
+            <div class="row-actions">
+              <button class="accept" onclick="setReportStatus(${r.id}, 'verified_fake')">Confirm fake</button>
+              <button class="reject" onclick="setReportStatus(${r.id}, 'verified_genuine')">Mark genuine</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+      wrap.innerHTML = `<table>
+        <thead><tr><th>Advertisement</th><th>Score</th><th>Classification</th><th>Reported by</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    }
+
+    const patternsWrap = document.getElementById('patternsWrap');
+    const counts = {};
+    scans.forEach(s => s.reasons.forEach(r => { counts[r] = (counts[r]||0) + 1; }));
+    const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0, 8);
+    if(entries.length === 0){
+      patternsWrap.innerHTML = '<div class="empty-state">Run a few scans to see pattern trends.</div>';
+    } else {
+      const max = entries[0][1];
+      patternsWrap.innerHTML = entries.map(([reason,count])=>`
+        <div class="pattern-bar-row">
+          <div class="pattern-label" title="${reason}">${reason}</div>
+          <div class="pattern-track"><div class="pattern-fill" style="width:${(count/max)*100}%;"></div></div>
+          <div class="pattern-count">${count}</div>
+        </div>`).join('');
+    }
+  }
+
+  window.setReportStatus = function(id, status){
+    const r = appState.reports.find(x=>x.id===id);
+    if(r) r.status = status;
+    renderDashboard();
+  };
+</script>
+
+</body>
+</html
