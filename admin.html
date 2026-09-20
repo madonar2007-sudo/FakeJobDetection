@@ -1,47 +1,164 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Admin Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake Job Detection - Admin Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f4f6f8;
+        }
+
+        .header {
+            background: #1f2937;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1100px;
+            margin: 30px auto;
+        }
+
+        .cards {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 200px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            margin-top: 0;
+        }
+
+        .number {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .table-box {
+            margin-top: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .fake {
+            font-weight: bold;
+        }
+
+        .genuine {
+            font-weight: bold;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
 </head>
 
 <body>
 
-    <h1>📊 Admin Dashboard</h1>
+    <div class="header">
+        <h1>Fake Job Detection</h1>
+        <p>Admin Dashboard</p>
+    </div>
 
-    <hr>
+    <div class="container">
 
-    <h2>Job Advertisement Summary</h2>
+        <div class="cards">
 
-    <p>📊 Total Job Advertisements: {{ total_jobs }}</p>
+            <div class="card">
+                <h3>Total Job Advertisements</h3>
+                <div class="number">{{ total_count }}</div>
+            </div>
 
-    <p>✅ Genuine Jobs: {{ genuine_jobs }}</p>
+            <div class="card">
+                <h3>Genuine Jobs</h3>
+                <div class="number">{{ genuine_count }}</div>
+            </div>
 
-    <p>⚠️ Suspicious/Fake Jobs: {{ fake_jobs }}</p>
+            <div class="card">
+                <h3>Fake / Suspicious Jobs</h3>
+                <div class="number">{{ fake_count }}</div>
+            </div>
 
-    <hr>
+        </div>
 
-    <h2>📋 Job Advertisement Details</h2>
 
-    <table border="1" cellpadding="10">
-        <tr>
-            <th>Job Title</th>
-            <th>Company</th>
-            <th>Result</th>
-            <th>Action</th>
-        </tr>
+        <div class="table-box">
 
-        {% for job in jobs %}
-        <tr>
-            <td>{{ job.title }}</td>
-            <td>{{ job.company }}</td>
-            <td>{{ job.result }}</td>
-            <td>
-                <button>Delete</button>
-            </td>
-        </tr>
-        {% endfor %}
+            <h2>Job Advertisement Details</h2>
 
-    </table>
+            {% if reports %}
+
+            <table>
+
+                <tr>
+                    <th>Job Advertisement</th>
+                    <th>Prediction</th>
+                </tr>
+
+                {% for r in reports %}
+
+                <tr>
+                    <td>{{ r["text"] }}</td>
+
+                    <td>
+                        {% if r["prediction"] == "Fake" %}
+                            <span class="fake">Fake</span>
+                        {% else %}
+                            <span class="genuine">Genuine</span>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </table>
+
+            {% else %}
+
+            <div class="empty">
+                No job advertisements have been checked yet.
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
 
 </body>
 </html>
