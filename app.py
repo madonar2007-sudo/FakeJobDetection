@@ -79,7 +79,7 @@ def home():
             "prediction": prediction
         })
 
-    return render_template("index.html", result=result)
+    return render_template("verihire-scanner.html", result=result)
 
 
 @app.route("/admin")
