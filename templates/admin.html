@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake Job Detection - Admin</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f4f6f8;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .cards {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            width: 180px;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            margin: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #eeeeee;
+        }
+
+        .fake {
+            color: red;
+            font-weight: bold;
+        }
+
+        .genuine {
+            color: green;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Fake Job Detection - Admin Dashboard</h1>
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>Total Job Advertisements</h3>
+            <h2>{{ total_count }}</h2>
+        </div>
+
+        <div class="card">
+            <h3>Genuine Jobs</h3>
+            <h2>{{ genuine_count }}</h2>
+        </div>
+
+        <div class="card">
+            <h3>Fake / Suspicious Jobs</h3>
+            <h2>{{ fake_count }}</h2>
+        </div>
+
+    </div>
+
+    <h2>Job Advertisement Details</h2>
+
+    <table>
+        <tr>
+            <th>Job Advertisement</th>
+            <th>Prediction</th>
+        </tr>
+
+        {% for report in reports %}
+        <tr>
+            <td>{{ report.text }}</td>
+
+            <td>
+                {% if report.prediction == "Fake" %}
+                    <span class="fake">Fake</span>
+                {% else %}
+                    <span class="genuine">Genuine</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+
+    </table>
+
+</body>
+</html>
